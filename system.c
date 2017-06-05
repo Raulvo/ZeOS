@@ -27,7 +27,7 @@ unsigned int *p_rdtr = (unsigned int *) KERNEL_START+2;
  **************************
  * Set properly all the registers, used
  * at initialization code.
- *   DS, ES, FS, GS <- DS
+ *   DS, ES, FS, GS, SS <- DS
  *   SS:ESP <- DS:DATA_SEGMENT_SIZE
  *         (the stacks grows towards 0)
  *
@@ -40,21 +40,18 @@ unsigned int *p_rdtr = (unsigned int *) KERNEL_START+2;
  * If using GCC 5+, see: https://gcc.gnu.org/gcc-5/porting_to.html
  */
 __attribute__((always_inline))
-inline void set_seg_regs(Word data_sel, Word stack_sel, DWord esp) {
-    esp = esp - 5*sizeof(DWord); /* To avoid overwriting task 1 */
+inline void set_seg_regs() {
+    register Word segment = __KERNEL_DS;
     __asm__ __volatile__(
         "cld\n\t"
         "mov %0,%%ds\n\t"
         "mov %0,%%es\n\t"
         "mov %0,%%fs\n\t"
         "mov %0,%%gs\n\t"
-        "mov %1,%%ss\n\t"
-        "mov %2,%%esp"
+        "mov %0,%%ss\n\t"
+        "mov %1,%%esp"
         : /* no output */
-        /* Put all parameters on registers so the compiler does not mess with
-         * the stack.
-         */
-        : "r" (data_sel), "r" (stack_sel), "r" (esp)
+        : "r" (segment), "i" (KERNEL_ESP)
         : "memory");
 }
 
@@ -68,7 +65,7 @@ int main(void) {
     set_eflags();
 
     /* Define the kernel segment registers */
-    set_seg_regs(__KERNEL_DS, __KERNEL_DS, KERNEL_ESP);
+    set_seg_regs();
 
 
     printk("Kernel Loaded!    ");

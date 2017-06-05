@@ -24,10 +24,10 @@ union task_union {
     unsigned long stack[KERNEL_STACK_SIZE];    /* pila de sistema, per procés */
 };
 
-extern union task_union task[NR_TASKS]; /* Vector de tasques */
-extern struct task_struct *idle_task;
+union task_union task[NR_TASKS]; /* Vector de tasques */
+struct task_struct *idle_task;
 
-#define KERNEL_ESP       (DWord) &task[1].stack[KERNEL_STACK_SIZE]
+#define KERNEL_ESP       (DWord) &task[1].stack[KERNEL_STACK_SIZE-1]
 
 /* Inicialitza les dades del proces inicial */
 void init_task1(void);
