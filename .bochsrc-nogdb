@@ -354,7 +354,7 @@ log: bochsout.txt
 panic: action=ask
 error: action=report
 info: action=report
-debug: action=report
+debug: action=ignore
 #pass: action=fatal
 
 #=======================================================================
@@ -446,7 +446,8 @@ debugger_log: -
 # Examples:
 #   vga_update_interval: 250000
 #=======================================================================
-vga_update_interval: 300000
+#vga_update_interval: 300000
+vga: update_freq=5
 
 # using for Winstone '98 tests
 #vga_update_interval:  100000
@@ -458,7 +459,7 @@ vga_update_interval: 300000
 # Examples:
 #   keyboard_serial_delay: 200
 #=======================================================================
-keyboard_serial_delay: 250
+#keyboard_serial_delay: 250
 
 #=======================================================================
 # KEYBOARD_PASTE_DELAY:
@@ -475,7 +476,7 @@ keyboard_serial_delay: 250
 # Examples:
 #   keyboard_paste_delay: 100000
 #=======================================================================
-keyboard_paste_delay: 100000
+#keyboard_paste_delay: 100000
 
 #=======================================================================
 # FLOPPY_COMMAND_DELAY:
@@ -573,7 +574,7 @@ private_colormap: enabled=0
 # Examples:
 #   keyboard_mapping: enabled=1, map=gui/keymaps/x11-pc-de.map
 #=======================================================================
-keyboard_mapping: enabled=0, map=
+#keyboard_mapping: enabled=0, map=
 
 #=======================================================================
 # KEYBOARD_TYPE:
@@ -645,6 +646,8 @@ keyboard_mapping: enabled=0, map=
 #   diskc: file=30M.sample, cyl=615, heads=6, spt=17
 #   diskc: file=46M.sample, cyl=940, heads=6, spt=17
 #   diskc: file=62M.sample, cyl=940, heads=8, spt=17
+#   diskc: file=112M.sample, cyl=900, heads=15, spt=17
+#   diskc: file=483M.sample, cyl=1024, heads=15, spt=63
 #=======================================================================
 #diskc: file="30M.sample", cyl=615, heads=6, spt=17
 
@@ -720,3 +723,5 @@ keyboard_mapping: enabled=0, map=
 #newharddrivesupport: enabled=1
 
 #gdbstub: enabled=1, port=1234, text_base=0, data_base=0, bss_base=0
+
+

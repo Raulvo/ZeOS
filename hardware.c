@@ -19,38 +19,45 @@ DWord get_eflags(void) {
 void set_eflags(void) {
     __asm__ __volatile__(
         "pushl $0\n\t"
-        "popfl" );
+        "popfl"
+        :
+        :
+        : "memory");
 }
 
 void set_idt_reg(Register * idt) {
     __asm__ __volatile__(
         "lidtl (%0)"
         : /*no output*/
-        : "r" (idt) );
+        : "r" (idt)
+        : "memory");
 }
 
 void set_gdt_reg(Register * gdt) {
     __asm__ __volatile__(
         "lgdtl (%0)"
         : /*no output*/
-        : "r" (gdt) );
+        : "r" (gdt)
+        : "memory");
 }
 
 void set_ldt_reg(Selector ldt) {
     __asm__ __volatile__(
         "lldtw %0"
         : /*no output*/
-        : "r" (ldt) );
+        : "r" (ldt)
+        : "memory");
 }
 
 void set_task_reg(Selector tr) {
     __asm__ __volatile__(
         "ltrw %0"
         : /*no output*/
-        : "r" (tr) );
+        : "r" (tr)
+        : "memory");
 }
 
-
+__attribute__((noreturn))
 void return_gate(Word ds, Word ss, DWord esp, Word cs, DWord eip) {
     __asm__ __volatile__ (
         "mov %0,%%es\n\t"
@@ -64,7 +71,9 @@ void return_gate(Word ds, Word ss, DWord esp, Word cs, DWord eip) {
         "pushl %4\n\t"       /* user eip */
         "lret"
         : /*no output*/
-        : "r" (ds), "g" (ss), "g" (esp), "g" (cs), "g" (eip), "d" (*p_rdtr));
+        : "r" (ds), "g" (ss), "g" (esp), "g" (cs), "g" (eip), "d" (*p_rdtr)
+        : "%eax","memory");
+    while(1); /* Remove warning of returning in a noreturn function */
 }
 
 /*

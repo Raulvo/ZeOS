@@ -37,7 +37,9 @@ unsigned int *p_rdtr = (unsigned int *) KERNEL_START+2;
 
 /*
  * This function MUST be 'inline' because it modifies the %esp
+ * If using GCC 5+, see: https://gcc.gnu.org/gcc-5/porting_to.html
  */
+__attribute__((always_inline))
 inline void set_seg_regs(Word data_sel, Word stack_sel, DWord esp) {
     esp = esp - 5*sizeof(DWord); /* To avoid overwriting task 1 */
     __asm__ __volatile__(
@@ -49,16 +51,19 @@ inline void set_seg_regs(Word data_sel, Word stack_sel, DWord esp) {
         "mov %1,%%ss\n\t"
         "mov %2,%%esp"
         : /* no output */
-        : "r" (data_sel), "r" (stack_sel), "g" (esp) );
-
+        /* Put all parameters on registers so the compiler does not mess with
+         * the stack.
+         */
+        : "r" (data_sel), "r" (stack_sel), "r" (esp)
+        : "memory");
 }
 
 /*
- *   Main entry point to ZEOS Operatin System
+ *   Main entry point to ZEOS Operating System kernel
  */
 
-int __attribute__((__section__(".text.main")))
-main(void) {
+__attribute__((__section__(".text.main.system")))
+int main(void) {
 
     set_eflags();
 
@@ -73,6 +78,7 @@ main(void) {
     setIdt(); /* Definicio del vector de interrupcions */
     setTSS(); /* Definicio de la TSS */
 
+
     /* Initialize Memory */
     init_mm();
 
@@ -83,7 +89,7 @@ main(void) {
     /* Initialize Scheduling */
     init_sched();
 
-    /* Initialize idle task  data */
+    /* Initialize idle task data */
     init_idle();
     /* Initialize task 1 data */
     init_task1();
@@ -95,6 +101,7 @@ main(void) {
     printk("Entering user mode...");
 
     enable_int();
+
     /*
      * We return from a 'theorical' call to a 'call gate' to reduce our privileges
      * and going to execute 'magically' at 'usr_main'...

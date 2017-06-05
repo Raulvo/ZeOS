@@ -3,18 +3,15 @@
  *  system.lds - Linker Script for ZeOS system image.
  */
 
-ENTRY(main)
 SECTIONS
 {
   . = 0x10000;
-    
-  .text.main : { 
-    /* reserved to store user code size */
-    BYTE(24);
-    *(.text.main) 
+  .text : {
+    /* 16-Byte gap to store user code size. Boot sequence jumps to 0x10010 linear address. */
+    . += 0x10;
+    *(.text.main.system);
+    *(.text) 
   }
-                                     
-  .text : { *(.text) }
   .rodata : { *(.rodata) }
   .data : { *(.data) }
   .bss : { *(.bss) }

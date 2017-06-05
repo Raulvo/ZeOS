@@ -1,9 +1,9 @@
 !
 !	bootsect.s    
 !
-! bootsect.s � la versi�simplificada del bootsect.s original de Linux.
+! bootsect.s: És la versió simplificada del bootsect.s original de Linux.
 ! L'arxiu compilat hauria d'ocupar, sense les capceleres, exactament 512
-! bytes, que � la longitud del sector 0 d'un disquet.
+! bytes, que és la longitud del sector 0 d'un disquet.
 
 #define SEC_PISTA            18	! Modificar en cas d'utilitzar disquets
 				! diferents de 1.44Mb:
@@ -34,8 +34,8 @@ _main:
 	sub	si,si
 	sub	di,di
 	cld
-	rep
-	movsw			! Moving boot sector from 0x07C00 to 0x90000
+	rep 
+        movsw			! rep movsw. Moving boot sector from 0x07C00 to 0x90000. 256 words (16 bit words).
 	jmpi	go,INITSEG
 
 ! ZEUS: Ejecutamos esto ya en la direccion 0x90000+go
@@ -46,7 +46,7 @@ go:	mov	di,#0x4000-12	! 0x4000 is arbitrary value >= length of
 				! 12 is disk parm size
 
 !
-! ZEUS: 2. Configuramos la pila de usuario en la direcci� 0x3ff40
+! ZEUS: 2. Configuramos la pila de usuario en la dirección 0x3ff40
 !
 	mov	ds,ax
 	mov	ss,ax		! put stack at INITSEG:0x4000-12.
@@ -57,14 +57,14 @@ go:	mov	di,#0x4000-12	! 0x4000 is arbitrary value >= length of
 !
 
 	mov	ah,#0x03	! read cursor pos
-	xor	bh,bh
-	int	0x10
+	xor	bh,bh           ! cursor position (0)
+	int	0x10            ! screen interrupt
 
-	mov	cx,#0xB
-	mov	bx,#0x0007	! page 0, attribute 7 (normal)
-	mov	bp,#msg1
-	mov	ax,#0x1301	! write string, move cursor
-	int	0x10
+	mov	cx,#0xB         ! String length \nGnidaol.. = 11 bytes
+	mov	bx,#0x0007	! bh = position 0, bl = color = attribute 7 (normal)
+	mov	bp,#msg1        ! bp = string position
+	mov	ax,#0x1301	! ah = write string, al = move cursor
+	int	0x10            ! screen interrupt
 
 ! ok, we've written the message, now
 ! we want to load the system (at 0x10000)
@@ -81,10 +81,10 @@ go:	mov	di,#0x4000-12	! 0x4000 is arbitrary value >= length of
 !   This is the default real mode switch routine.
 !   to be called just before protected mode transition
 	cli			! no interrupts allowed !
-	mov	al,#0x80	! disable NMI for the bootup sequence
-	out	#0x70,al
+	mov	al,#0x80	! disable Non Maskable Interrupts for the bootup sequence
+	out	#0x70,al        ! CMOS port, higher bits == 1, then disable NMI
 
-! Now we enable A20
+! Now we enable A20. Access to memory > 1MiB.
 	call	empty_8042
 	mov	al,#0xD1	! command write
 	out	#0x64,al
@@ -157,8 +157,10 @@ a20_wait:
 	mov	ds,ax
 !
 ! ZEUS: Carreguem els valors de les taules IDT i GDT
+! Raul: lidt and lgdt use a 6-byte source operand (48 bits)
+!       2 bytes for the limit + 4 bytes for the base address
 !
-	lidt	idt_48		! load idt with 0,0
+	lidt	idt_48		! load idt with 0,0,0
 	lgdt	gdt_48		! load gdt with whatever appropriate
 
 ! Well, now's the time to actually move into protected mode. To make
@@ -169,9 +171,8 @@ a20_wait:
 !
 ! Note that the short jump isn't strictly needed, although there are
 ! reasons why it might be a good idea. It won't hurt in any case.
-
-	mov	eax,#1		! protected mode (PE) bit
-	mov	cr0,eax		! a partir del i386 aix�ja � possible fer-ho
+        mov	eax,#1		! protected mode (PE) bit
+	mov	cr0,eax		! a partir del i386 això ja és possible fer-ho
 
 ! Well, that certainly wasn't fun :-(. Hopefully it works, and we don't
 ! need no steenking BIOS anyway (except for the initial loading :-).
@@ -187,11 +188,14 @@ a20_wait:
 !	take our 48 bit far pointer. (INTeL 80386 Programmer's Reference
 !	Manual, Mixing 16-bit and 32-bit code, page 16-6)
 !
-! ZEUS: Saltamos al main()!!
-!
-	db	0x66,0xea	! prefix + jmpi-opcode
-code32:	dd	0x10010		! will be set to 0x100000 for big kernels
-	dw	KERNEL_CS
+! ZEUS: Saltamos al main()!! 0x10000+0x10 para dejar espacio al programa build que genera el zeos.bin para guardar los tamaños
+code32:     jmpi    0x10010, KERNEL_CS ! as86 far jump (intersegment) macro. See man as86(1). Sets cs register to KERNEL_CS
+! Raul: Codigo original:
+!        db	0x66,0xea	! Declare Byte (1 Byte), prefix + far jump opcode (jmpi)
+!code32:	dd	0x10010		! Declare Double word (4 Bytes), will be set to 0x100000 for big kernels
+!	dw	KERNEL_CS  ! Declare Word (2 Bytes), kernel code segment
+
+
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! ZeOS Loading finishes here!!!!!
@@ -211,50 +215,50 @@ read_it:
 	mov	al,setup_sects	! 4 sectors
 	inc	al
 	mov	sread,al
-	mov ax,es
-	test ax,#0x0fff
-die:	jne die			! es must be at 64kB boundary
-	xor bx,bx		! bx is starting address within segment
+	mov     ax,es
+	test    ax,#0x0fff
+die:	jne     die			! es must be at 64kB boundary
+	xor     bx,bx		! bx is starting address within segment
 rp_read:
-	mov ax,es
-	sub ax,#SYSSEG
-	cmp ax,syssize		! have we loaded all yet?
-	jbe ok1_read
+	mov     ax,es
+	sub     ax,#SYSSEG
+	cmp     ax,syssize		! have we loaded all yet?
+	jbe     ok1_read
 	ret
 ok1_read:
-	mov ax,sectors
-	sub ax,sread
-	mov cx,ax
-	shl cx,#9
-	add cx,bx
-	jnc ok2_read
-	je ok2_read
-	xor ax,ax
-	sub ax,bx
-	shr ax,#9
+	mov     ax,sectors
+	sub     ax,sread
+	mov     cx,ax
+	shl     cx,#9
+	add     cx,bx
+	jnc     ok2_read
+	je      ok2_read
+	xor     ax,ax
+	sub     ax,bx
+	shr     ax,#9
 ok2_read:
-	call read_track
-	mov cx,ax
-	add ax,sread
-	cmp ax,sectors
-	jne ok3_read
-	mov ax,#1
-	sub ax,head
-	jne ok4_read
-	inc track
+	call    read_track
+	mov     cx,ax
+	add     ax,sread
+	cmp     ax,sectors
+	jne     ok3_read
+	mov     ax,#1
+	sub     ax,head
+	jne     ok4_read
+	inc     track
 ok4_read:
-	mov head,ax
-	xor ax,ax
+	mov     head,ax
+	xor     ax,ax
 ok3_read:
-	mov sread,ax
-	shl cx,#9
-	add bx,cx
-	jnc rp_read
-	mov ax,es
-	add ah,#0x10
-	mov es,ax
-	xor bx,bx
-	jmp rp_read
+	mov     sread,ax
+	shl     cx,#9
+	add     bx,cx
+	jnc     rp_read
+	mov     ax,es
+	add     ah,#0x10
+	mov     es,ax
+	xor     bx,bx
+	jmp     rp_read
 
 read_track:
 	pusha
@@ -283,26 +287,26 @@ read_track:
 	popa
 	ret
 
-/*
- * This procedure turns off the floppy drive motor, so
- * that we enter the kernel in a known state, and
- * don't have to worry about it later.
- */
+!
+!This procedure turns off the floppy drive motor, so
+!that we enter the kernel in a known state, and
+!don't have to worry about it later.
+!
 kill_motor:
-	push dx
-	mov dx,#0x3f2
-	xor al, al
+	push    dx
+	mov     dx,#0x3f2
+	xor     al, al
 	outb
-	pop dx
+	pop     dx
 	ret
 
 empty_8042:
-       push    ecx
-       mov     ecx,#0xFFFFFF
+        push    ecx
+        mov     ecx,#0xFFFFFF
 
 empty_8042_loop:
-       dec     ecx
-       jz      empty_8042_end_loop
+        dec     ecx
+        jz      empty_8042_end_loop
 
 	call	delay
 	in	al,#0x64	! 8042 status port
@@ -321,9 +325,9 @@ empty_8042_end_loop:
 !
 ! Delay is needed after doing I/O
 !
-  delay:
-  .word 0x00eb			! jmp $+2
-ret
+delay:
+        .word 0x00eb			! jmp $+2
+        ret
 
 sectors:
 	.word SEC_PISTA  ! 18 sectores por pista: t�ico disquet de 1.44Mb
@@ -332,48 +336,48 @@ msg1:
 	.byte 13,10
 	.ascii "Loading.."
 
+
 .org 435
 gdt:		/* GLOBAL DESCRIPTOR TABLE */
-  .word  0,0,0,0          ! dummy
+        .word  0,0,0,0          ! dummy
                                  /*    Table Indicator RPL */
-  .word  0,0,0,0          ! sin usar
+        .word  0,0,0,0          ! sin usar
       /* pointed by __KERNEL_CS = 0x10 = 0000 0000 0001 0 0 00 */
-  .word  0xFFFF           ! 4Gb - (0x100000*0x1000 = 4Gb)
-  .word  0x0000           ! base address=0
-  .byte  0x00,0x9a        ! code read/exec
-  .byte  0xcf,0x00        ! granularity = 4096, 386 (+5th nibble of limit)
-    /* pointed by __KERNEL_DS = 0x18 = 0000 0000 0001 1 0 00 */
-  .word  0xFFFF           ! 4Gb - (0x100000*0x1000 = 4Gb)
-  .word  0x0000           ! base address = 00 03 2000
-  .byte  0x00,0x92        ! data read/write
-  .byte  0xcf,0x00        ! granularity = 4096, 386 (+5th nibble of limit)
-      /* pointed by __USER_CS = 0x23 = 0000 0000 0001 0 0 11 */
-  .word  0xFFFF           ! 4Gb - (0x100000*0x1000 = 4Gb)
-  .word  0x0000           ! base address=0
-  .byte  0x00,0xfa        ! code read/exec
-  .byte  0xcf,0x00        ! granularity = 4096, 386 (+5th nibble of limit)
-    /* pointed by __USER_DS = 0x2B = 0000 0000 0001 1 0 11 */
-  .word  0xFFFF           ! 4Gb - (0x100000*0x1000 = 4Gb)
-  .word  0x0000           ! base address = 00 03 2000
-  .byte  0x00,0xf2        ! data read/write
-  .byte  0xcf,0x00        ! granularity = 4096, 386 (+5th nibble of limit)
-  /*TSS*/
-  .word  104,0
-  .byte  0,0x89,0,0
-
+        .word  0xFFFF           ! 4Gb - (0x100000*0x1000 = 4Gb)
+        .word  0x0000           ! base address=0
+        .byte  0x00,0x9a        ! code read/exec
+        .byte  0xcf,0x00        ! granularity = 4096, 386 (+5th nibble of limit)
+          /* pointed by __KERNEL_DS = 0x18 = 0000 0000 0001 1 0 00 */
+        .word  0xFFFF           ! 4Gb - (0x100000*0x1000 = 4Gb)
+        .word  0x0000           ! base address = 00 03 2000
+        .byte  0x00,0x92        ! data read/write
+        .byte  0xcf,0x00        ! granularity = 4096, 386 (+5th nibble of limit)
+            /* pointed by __USER_CS = 0x23 = 0000 0000 0001 0 0 11 */
+        .word  0xFFFF           ! 4Gb - (0x100000*0x1000 = 4Gb)
+        .word  0x0000           ! base address=0
+        .byte  0x00,0xfa        ! code read/exec
+        .byte  0xcf,0x00        ! granularity = 4096, 386 (+5th nibble of limit)
+          /* pointed by __USER_DS = 0x2B = 0000 0000 0001 1 0 11 */
+        .word  0xFFFF           ! 4Gb - (0x100000*0x1000 = 4Gb)
+        .word  0x0000           ! base address = 00 03 2000
+        .byte  0x00,0xf2        ! data read/write
+        .byte  0xcf,0x00        ! granularity = 4096, 386 (+5th nibble of limit)
+        /*TSS*/
+        .word  104,0            ! 104 Bytes length 
+        .byte  0,0x89,0,0
 idt_48:
-  .word  0,0,0
-
+        .word  0,0,0
 /*.org 497*/
 setup_sects:
 	.byte SETUPSECS
 	.word	0	!dummy
-syssize:
+syssize: ! 2 bytes to store the image size
 	.word SYSSIZE
 gdt_48:
-  .word  0x8000		! gdt limit = 2048, 256 GDT entries
+        .word  0x8000		! gdt limit = 2048, 256 GDT entries
 gdt_addr:
-  .word  gdt,0x9	! gdt base  = 0X9xxxx
+        .word  gdt,0x9	! gdt base  = 0X9xxxx
 	.word	0	!dummy
-boot_flag:
+
+boot_flag: ! checked by build.c. Bytes 511-512
 	.word 0xAA55

@@ -27,6 +27,7 @@
  */
 
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -42,16 +43,12 @@
 #define DEF_SETUPSEG    0x9020
 #define DEF_SYSSIZE 0x7F00
 
-typedef unsigned char byte;
-typedef unsigned short word;
-typedef unsigned long u32;
-
 #define DEFAULT_MAJOR_ROOT 0
 #define DEFAULT_MINOR_ROOT 0
 
 /* Minimal number of setup sectors (see also bootsect.S) */
 
-byte buf[1024];
+uint8_t buf[1024];
 int fd;
 
 void die(const char * str, ...) {
@@ -67,8 +64,8 @@ void die(const char * str, ...) {
 #define MINIX_HEADER_LEN 32
 
 void minix_open(const char *name) {
-    static byte hdr[] = { 0x01, 0x03, 0x10, 0x04, 0x20, 0x00, 0x00, 0x00 };
-    static u32 *lb = (u32 *) buf;
+    static uint8_t hdr[] = { 0x01, 0x03, 0x10, 0x04, 0x20, 0x00, 0x00, 0x00 };
+    static uint32_t *lb = (uint32_t *) buf;
 
     if ((fd = open(name, O_RDONLY, 0)) < 0)
         die("Unable to open `%s': %m", name);
@@ -77,7 +74,7 @@ void minix_open(const char *name) {
     if (memcmp(buf, hdr, sizeof(hdr)) || lb[5])
         die("%s: Non-Minix header", name);
     if (lb[3])
-        die("%s: Illegal data segment");
+        die("%s: Illegal data segment, value %d",name,lb[3]);
     if (lb[4])
         die("%s: Illegal bss segment");
     if (lb[7])
@@ -90,8 +87,8 @@ void usage(void) {
 
 int main(int argc, char ** argv) {
     unsigned int i, sz, uz;
-    u32 im_size, sys_size, usr_size;
-    byte major_root, minor_root;
+    uint32_t im_size, sys_size, usr_size;
+    uint8_t major_root, minor_root;
     struct stat sb;
 
     if (argc != 4)
