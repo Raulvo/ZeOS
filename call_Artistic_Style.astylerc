@@ -1,0 +1,10 @@
+--indent-classes
+--indent-switches
+--indent-cases
+--indent-namespaces
+--indent-labels
+--indent-preprocessor
+--indent-col1-comments
+--indent=spaces=4
+--convert-tabs
+--style=java
