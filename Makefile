@@ -26,7 +26,7 @@ INCLUDEDIR = include
 # Define here flags to compile the tests if needed
 JP = 
 
-CFLAGS = $(HOSTARCHFLAGS) -O2 -fno-omit-frame-pointer -g -ffreestanding $(JP) -Wall -I$(INCLUDEDIR)
+CFLAGS = $(HOSTARCHFLAGS) -O2 -g -ffreestanding $(JP) -Wall -I$(INCLUDEDIR)
 CPPFLAGS = $(HOSTARCHFLAGS) -O2 -I$(INCLUDEDIR)
 ASMFLAGS = -I$(INCLUDEDIR) 
 LINKFLAGS = -m elf_i386

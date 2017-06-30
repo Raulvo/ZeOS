@@ -13,6 +13,7 @@ void set_idt_reg(Register * idt);
 void set_gdt_reg(Register * gdt);
 void set_ldt_reg(Selector ldt);
 void set_task_reg(Selector tr);
+void set_seg_regs(void);
 
 void return_gate(Word ds, Word ss, DWord esp, Word cs, DWord eip) __attribute__((noreturn));
 

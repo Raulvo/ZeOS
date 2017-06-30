@@ -13,47 +13,16 @@
 #include <utils.h>
 #include <zeos_mm.h> /* TO BE DELETED WHEN ADDED THE PROCESS MANAGEMENT CODE TO BECOME MULTIPROCESS */
 
+/*
+ * PH_USER_START = 0x1 MiB.
+ * KERNEL_START, +1, +2 memory positions are written by build.c.
+ * With protected mode we can reach addresses > 1 MiB.
+ */
 
-int (*usr_main)(void) = (void *) PH_USER_START;
+int (*usr_main)(void) = (void *) PH_USER_START; 
 unsigned int *p_sys_size = (unsigned int *) KERNEL_START;
 unsigned int *p_usr_size = (unsigned int *) KERNEL_START+1;
 unsigned int *p_rdtr = (unsigned int *) KERNEL_START+2;
-
-/************************/
-/** Auxiliar functions **/
-/************************/
-/**************************
- ** setSegmentRegisters ***
- **************************
- * Set properly all the registers, used
- * at initialization code.
- *   DS, ES, FS, GS, SS <- DS
- *   SS:ESP <- DS:DATA_SEGMENT_SIZE
- *         (the stacks grows towards 0)
- *
- * cld -> gcc2 wants DF (Direction Flag (eFlags.df))
- *        always clear.
- */
-
-/*
- * This function MUST be 'inline' because it modifies the %esp
- * If using GCC 5+, see: https://gcc.gnu.org/gcc-5/porting_to.html
- */
-__attribute__((always_inline))
-inline void set_seg_regs() {
-    register Word segment = __KERNEL_DS;
-    __asm__ __volatile__(
-        "cld\n\t"
-        "mov %0,%%ds\n\t"
-        "mov %0,%%es\n\t"
-        "mov %0,%%fs\n\t"
-        "mov %0,%%gs\n\t"
-        "mov %0,%%ss\n\t"
-        "mov %1,%%esp"
-        : /* no output */
-        : "r" (segment), "i" (KERNEL_ESP)
-        : "memory");
-}
 
 /*
  *   Main entry point to ZEOS Operating System kernel
@@ -66,7 +35,6 @@ int main(void) {
 
     /* Define the kernel segment registers */
     set_seg_regs();
-
 
     printk("Kernel Loaded!    ");
 

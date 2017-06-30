@@ -11,7 +11,7 @@
 .text
 
 SETUPSECS = 0			! default nr of setup-sectors
-BOOTSEG   = 0x07C0		! original address of boot-sector
+BOOTSEG   = 0x07C0		! BIOS loads the first disk sector in this addres
 INITSEG   = 0x9000		! final address of boot-sector
 SYSSEG    = 0x1000		! kernel (protected-mode) address
 SYSSIZE   = 0x7F00		! kernel size
@@ -46,7 +46,7 @@ go:	mov	di,#0x4000-12	! 0x4000 is arbitrary value >= length of
 				! 12 is disk parm size
 
 !
-! ZEUS: 2. Configuramos la pila de usuario en la dirección 0x3ff40
+! ZEUS: 2. Configuramos la pila de usuario en la dirección 0x3ff4
 !
 	mov	ds,ax
 	mov	ss,ax		! put stack at INITSEG:0x4000-12.
@@ -363,7 +363,7 @@ gdt:		/* GLOBAL DESCRIPTOR TABLE */
         .byte  0x00,0xf2        ! data read/write
         .byte  0xcf,0x00        ! granularity = 4096, 386 (+5th nibble of limit)
         /*TSS*/
-        .word  104,0            ! 104 Bytes length 
+        .word  104,0            ! 104 Bytes length
         .byte  0,0x89,0,0
 idt_48:
         .word  0,0,0
